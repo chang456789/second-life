@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Second Life｜二手家具估價與回購（Bye2 提案原型）</title>
+</head>
+<body>
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap">
+<style>
+/* Layout: IKEA 網站語彙。白底、黑字、藍色膠囊主按鈕、黃色標籤、灰底商品圖、底線分隔的清單列。商品頁在寬螢幕為左圖右資訊兩欄，手機改單欄。單一淺色主題。 */
+:root{
+  --blue:#0058a3; --blue-hover:#004f93; --yellow:#ffdb00; --ink:#111111; --text:#484848; --muted:#767676;
+  --line:#dfdfdf; --tile:#f5f5f5; --white:#ffffff; --green:#0a8a00; --red:#e00751;
+  --font:"Noto Sans TC","Noto Sans","Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--white);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.57;margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+.notice{background:var(--tile);font-size:12px;color:var(--text)}
+.notice .wrap{padding-block:8px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header.top{border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:20px;padding-block:16px}
+.logo{display:flex;flex-direction:column;line-height:1;cursor:pointer;background:none;border:0;padding:0;text-align:left}
+.logo b{font-size:22px;font-weight:900;letter-spacing:-.02em}
+.logo small{font-size:11px;color:var(--muted);margin-top:4px}
+.search{flex:1;display:flex;align-items:center;gap:10px;background:var(--tile);border-radius:999px;padding:10px 18px;color:var(--muted);min-width:0}
+.search svg{flex:none}
+.search span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.staff{background:none;border:1px solid var(--ink);border-radius:999px;padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap}
+.staff:hover{background:var(--tile)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:24px}
+.tiles div{background:var(--tile);padding:16px}.tiles b{display:block;font-size:26px;font-weight:900}.tiles span{font-size:12px;color:var(--text)}
+.queue{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.qrow{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 0;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer;width:100%}
+.qrow:hover .pname{text-decoration:underline}
+.qrow .img{width:64px}
+.ok-tag{color:var(--green);font-size:12px;font-weight:700}
+.checklist{display:flex;flex-direction:column;gap:10px}
+.checklist label{display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer}
+.checklist input{width:20px;height:20px;accent-color:var(--blue)}
+.toast{background:var(--ink);color:var(--white);padding:14px 16px;font-size:14px}
+.acct{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
+.acct svg{width:22px;height:22px}
+@media (max-width:640px){.search{display:none}.acct span{display:none}}
+
+main{padding-block:24px 64px}
+.crumbs{font-size:12px;color:var(--muted);margin-bottom:16px;display:flex;gap:6px;flex-wrap:wrap}
+.crumbs button{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
+h1{font-size:28px;font-weight:700;line-height:1.3;margin:0 0 8px;letter-spacing:-.01em}
+h2{font-size:20px;font-weight:700;margin:0 0 12px}
+.sub{color:var(--text);margin:0 0 24px;max-width:640px}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.chip{border:1px solid var(--line);background:var(--white);border-radius:999px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--white)}
+
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px 20px}
+@media (max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.prod{background:none;border:0;padding:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.img{background:var(--tile);aspect-ratio:1/1;max-width:100%;display:grid;place-items:center;position:relative}
+.img svg{width:58%;height:58%;color:#9a9a9a}
+.prod:hover .pname{text-decoration:underline}
+.badge{position:absolute;left:0;top:12px;background:var(--yellow);color:var(--ink);font-weight:700;font-size:12px;padding:2px 8px}
+.badge.grey{background:var(--ink);color:var(--white)}
+.pname{font-weight:700;font-size:14px;text-transform:uppercase;margin-top:6px}
+.pdesc{color:var(--text);font-size:13px}
+.price{font-weight:900;letter-spacing:-.02em;line-height:1;display:inline-flex;align-items:flex-start;gap:2px}
+.price .cur{font-size:.45em;margin-top:.18em;font-weight:700}
+.price.s{font-size:22px}.price.l{font-size:40px}
+.plabel{font-size:12px;color:var(--text)}
+
+.pdp{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:48px;align-items:start}
+@media (max-width:900px){.pdp{grid-template-columns:1fr;gap:24px}}
+.panel{display:flex;flex-direction:column;gap:20px}
+.upload{background:var(--tile);aspect-ratio:4/3;max-width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;text-align:center;padding:16px;color:var(--text)}
+.upload img{max-height:100%;max-width:100%;object-fit:contain}
+.upload:focus-within{outline:2px solid var(--blue);outline-offset:2px}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;padding:0 32px;border-radius:999px;font-weight:700;font-size:14px;border:1px solid var(--blue);background:var(--blue);color:var(--white);cursor:pointer;width:100%}
+.btn:hover{background:var(--blue-hover)}
+.btn.sec{background:var(--white);color:var(--ink);border-color:var(--ink)}
+.btn.sec:hover{background:var(--tile)}
+.btn.link{background:none;border:0;color:var(--ink);text-decoration:underline;min-height:auto;padding:0;width:auto}
+.btn[disabled]{background:var(--line);border-color:var(--line);color:var(--muted);cursor:not-allowed}
+.btns{display:flex;flex-direction:column;gap:12px}
+
+.rows{border-top:1px solid var(--line)}
+.rowi{display:flex;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+.rowi span:first-child{color:var(--text)}
+.rowi b{font-weight:700;text-align:right}
+.num{font-variant-numeric:tabular-nums}
+
+.opts{display:flex;flex-direction:column;gap:12px}
+.opt{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:14px;align-items:start;text-align:left;background:var(--white);border:1px solid var(--line);border-radius:4px;padding:18px 16px;cursor:pointer;width:100%}
+.opt[aria-checked="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
+.opt[aria-disabled="true"]{cursor:not-allowed;color:var(--muted)}
+.opt[aria-disabled="true"] .radio{border-color:var(--line)}
+.radio{width:22px;height:22px;border:2px solid var(--ink);border-radius:50%;margin-top:1px;display:grid;place-items:center}
+.opt[aria-checked="true"] .radio{border-color:var(--blue)}
+.opt[aria-checked="true"] .radio::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--blue)}
+.otitle{font-weight:700;font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.odesc{color:var(--text);font-size:13px;margin-top:4px}
+.oright{font-weight:700;text-align:right;white-space:nowrap}
+.tag{background:var(--yellow);font-size:11px;font-weight:700;padding:1px 6px}
+.tag.no{background:var(--tile);color:var(--muted)}
+.ofit{display:block;font-size:12px;color:var(--text);margin-top:6px}
+.ofit b{color:var(--ink)}
+.gr{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.gr button{display:flex;justify-content:space-between;gap:12px;align-items:center;text-align:left;padding:12px 10px;border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer;width:100%}
+.gr button[aria-pressed="true"]{background:var(--tile);box-shadow:inset 3px 0 0 var(--blue)}
+.gr b{font-size:15px}
+
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);border-radius:999px;padding:10px 18px;background:var(--white);cursor:pointer;font-weight:700;font-size:13px}
+.seg button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+
+.stepper{display:flex;gap:0;margin-bottom:28px;border-bottom:1px solid var(--line);overflow-x:auto}
+.stepper div{display:flex;align-items:center;gap:8px;padding:0 20px 14px 0;font-weight:700;font-size:13px;color:var(--muted);white-space:nowrap}
+.stepper i{font-style:normal;width:24px;height:24px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:12px}
+.stepper .on{color:var(--ink)} .stepper .on i{background:var(--ink);border-color:var(--ink);color:var(--white)}
+.stepper .done i{background:var(--white);border-color:var(--ink);color:var(--ink)}
+
+.progress{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.progress span{display:block;height:100%;background:var(--blue);width:0;transition:width .45s ease}
+.checks{list-style:none;padding:0;margin:20px 0 0}
+.checks li{display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line);color:var(--muted)}
+.checks li.ok{color:var(--ink)} .checks li.ok em{color:var(--green);font-style:normal;font-weight:700}
+
+.info{background:var(--tile);padding:16px;font-size:13px;color:var(--text);display:flex;gap:12px}
+.info svg{flex:none;width:20px;height:20px;color:var(--ink)}
+.conf{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+.conf svg{width:32px;height:32px;color:var(--green);flex:none}
+.code{font-weight:900;font-size:20px;letter-spacing:.04em}
+.next{list-style:none;padding:0;margin:0;counter-reset:n}
+.next li{counter-increment:n;display:grid;grid-template-columns:32px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.next li::before{content:counter(n);width:24px;height:24px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;font-size:12px;font-weight:700}
+.next li.d::before{background:var(--ink);color:var(--white)}
+.impact{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.impact div{background:var(--tile);padding:16px}
+.impact b{font-size:24px;font-weight:900;display:block}
+.impact span{font-size:12px;color:var(--text)}
+footer{border-top:1px solid var(--line);background:var(--tile);font-size:12px;color:var(--text)}
+footer .wrap{padding-block:24px}
+</style>
+
+<div class="notice"><div class="wrap"><span>2026 永續智慧創新黑客松．IKEA 命題（場次 3-ME）學生提案原型</span><span>非 IKEA 官方網站．所有資料皆為示範</span></div></div>
+<header class="top"><div class="wrap">
+  <button class="logo" id="home" aria-label="回到我的家具"><b>Second Life</b><small>二手家具估價與回購</small></button>
+  <div class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>搜尋品名或掃描商品標籤</span></div>
+  <button class="staff" id="staffBtn">門市端複驗</button>
+  <div class="acct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>嗨，陳小姐</span></div>
+</div></header>
+<main class="wrap" id="view"></main>
+<footer><div class="wrap">Bye2 團隊（國立中央大學）提案原型。品項價格與重量取自 IKEA 台灣官網（2026 年 11 月查詢）；二手需求度依蝦皮、Yahoo 拍賣、旋轉拍賣 33 筆二手開價調查分級；會員資料為示範資料；家具狀況判斷為模擬結果，正式版將以影像辨識模型分析照片。</div></footer>
+
+<script>
+const ICON={
+ shelf:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="28" y="8" width="44" height="84"/><path d="M28 30h44M28 52h44M28 74h44"/><rect x="34" y="16" width="6" height="14"/><rect x="42" y="19" width="5" height="11"/><rect x="58" y="40" width="9" height="12"/></svg>',
+ table:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 42h80v6H10zM16 48v38M84 48v38M24 48v30M76 48v30"/></svg>',
+ chair:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M34 12h32v38H34zM30 50h40v6H30zM33 56v34M67 56v34M38 20h24M38 28h24M38 36h24"/></svg>',
+ tv:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="44" width="88" height="30"/><path d="M50 44v30M36 59h4M60 59h4M12 74v8M88 74v8"/></svg>',
+ sofa:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 46h10v28H10zM80 46h10v28H80zM20 56h60v18H20zM24 30h52v26H24zM16 74v8M84 74v8"/></svg>'
+};
+const ITEMS=[
+ {id:'billy',name:'BILLY',type:'書櫃',spec:'80x28x202 公分，白色',bought:'2022-03',price:2290,weight:40,demand:.8,icon:'shelf',ok:true},
+ {id:'micke',name:'MICKE',type:'書桌',spec:'105x50 公分，白色',bought:'2023-08',price:2999,weight:null,demand:1.0,icon:'table',ok:true},
+ {id:'poang',name:'POÄNG',type:'扶手椅',spec:'樺木貼皮／Knisa 淺米色',bought:'2021-11',price:2499,weight:null,demand:1.0,icon:'chair',ok:true},
+ {id:'brimnes',name:'BRIMNES',type:'二門衣櫃',spec:'78x190 公分，白色',bought:'2020-06',price:4499,weight:61.5,demand:.6,icon:'tv',ok:true},
+ {id:'malm',name:'MALM',type:'高床框',spec:'150x200 公分，白色，含床板',bought:'2019-09',price:7999,weight:55.3,demand:.6,icon:'sofa',ok:false}
+];
+const GRADES=[{k:'new',l:'近新',c:.5,d:'沒有明顯刮痕，功能完整'},{k:'good',l:'良好',c:.4,d:'輕微使用痕跡，不影響外觀'},{k:'used',l:'明顯使用',c:.3,d:'有刮痕或褪色，結構正常'}];
+const BONUS=.15;
+const S={step:'list',filter:'all',item:null,photo:null,grade:null,route:null,slot:null,pay:'voucher'};
+const r10=n=>Math.round(n/10)*10;
+const money=n=>Math.round(n).toLocaleString('zh-TW');
+const P=(n,size='s')=>`<span class="price ${size} num"><span class="cur">NT$</span>${money(n)}</span>`;
+const ym=b=>b.replace('-',' 年 ').replace(/ 0?(\d+)$/,' $1')+' 月';
+const age=b=>{const [y,m]=b.split('-').map(Number);return (2026*12+10-(y*12+m-1))/12};
+const grade=()=>GRADES.find(g=>g.k===S.grade);
+function est(it=S.item,g=grade()){const b=it.price*g.c*it.demand;return{low:r10(b*.9),high:r10(b*1.05),voucher:r10(b*(1+BONUS))}}
+function aiGrade(it){const a=age(it.bought);return a<2?'new':a<4.5?'good':'used'}
+const v=document.getElementById('view');
+document.getElementById('home').onclick=()=>go('list');
+document.getElementById('staffBtn').onclick=()=>{S.staffSel=null;S.staffDone=null;go('staff')};
+function go(s){S.step=s;render();window.scrollTo(0,0)}
+function crumbs(list){return `<nav class="crumbs">${list.map((c,i)=>i<list.length-1?`<button data-go="${c[1]}">${c[0]}</button><span>›</span>`:`<span>${c[0]}</span>`).join('')}</nav>`}
+function stepper(n){const L=['估價','處理方式','收件'];return `<div class="stepper">${L.map((l,i)=>`<div class="${i===n?'on':i<n?'done':''}"><i>${i<n?'✓':i+1}</i>${l}</div>`).join('')}</div>`}
+function bind(){v.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go))}
+function render(){({list,pdp,scan,result,route,slot,done,staff,staffq:()=>{S.staffSel=null;S.step='staff';staff()}})[S.step]();bind()}
+
+function list(){
+  const items=ITEMS.filter(i=>S.filter==='all'||(S.filter==='ok'?i.ok:!i.ok));
+  v.innerHTML=`${crumbs([['我的帳戶','list'],['我的家具']])}
+  <h1>我的家具</h1>
+  <p class="sub">這些是你用 IKEA Family 會員身分買過的家具。選一件，拍張照，1 分鐘就知道 IKEA 回購多少。</p>
+  <div class="chips">${[['all','全部'],['ok','可回購'],['no','可維修或捐贈']].map(([k,l])=>`<button class="chip" data-f="${k}" aria-pressed="${S.filter===k}">${l}</button>`).join('')}</div>
+  <div class="grid">${items.map(it=>{const top=est(it,GRADES[0]);return `
+    <button class="prod" data-id="${it.id}">
+      <div class="img">${it.ok?'<span class="badge">可回購</span>':'<span class="badge grey">維修或捐贈</span>'}${ICON[it.icon]}</div>
+      <span class="pname">${it.name}</span>
+      <span class="pdesc">${it.type}，${it.spec}</span>
+      <span class="plabel">${ym(it.bought)}購入</span>
+      ${it.ok?`<span class="plabel">回購估價最高</span>${P(top.voucher)}`:`<span class="plabel">此品項不在回購範圍</span>`}
+    </button>`}).join('')}</div>`;
+  v.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{S.filter=b.dataset.f;list();bind()});
+  v.querySelectorAll('.prod').forEach(b=>b.onclick=()=>{S.item=ITEMS.find(i=>i.id===b.dataset.id);Object.assign(S,{photo:null,grade:null,route:null,slot:null});go('pdp')});
+}
+
+function demoPhoto(){const c=document.createElement('canvas');c.width=800;c.height=600;const x=c.getContext('2d');
+ x.fillStyle='#ece8e1';x.fillRect(0,0,800,600);x.fillStyle='#d9d2c6';x.fillRect(0,470,800,130);
+ x.fillStyle='#fafafa';x.strokeStyle='#bdb7ad';x.lineWidth=4;x.fillRect(260,50,280,420);x.strokeRect(260,50,280,420);
+ [190,330].forEach(y=>{x.beginPath();x.moveTo(260,y);x.lineTo(540,y);x.stroke()});
+ x.fillStyle='#6f8f88';x.fillRect(285,115,30,75);x.fillStyle='#c4955a';x.fillRect(322,128,26,62);x.fillStyle='#38506a';x.fillRect(440,270,60,60);
+ return c.toDataURL('image/jpeg',.85)}
+
+function pdp(){const it=S.item;
+ v.innerHTML=`${crumbs([['我的家具','list'],[it.name]])}
+ <div class="pdp">
+  <label class="upload" for="file">${S.photo?`<img src="${S.photo}" alt="你上傳的 ${it.name} 照片">`:`<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="4"/></svg><b style="color:var(--ink)">拍一張家具正面照</b><span>光線充足、整件入鏡。有刮痕的地方可以再補一張近照。</span>`}
+   <input id="file" type="file" accept="image/*" capture="environment"></label>
+  <div class="panel">
+   <div><h1 style="text-transform:uppercase;margin:0">${it.name}</h1><div class="pdesc" style="font-size:16px">${it.type}，${it.spec}</div></div>
+   <div class="rows">
+    <div class="rowi"><span>購入時間</span><b>${ym(it.bought)}</b></div>
+    <div class="rowi"><span>購買價格</span><b class="num">NT$ ${money(it.price)}</b></div>
+    <div class="rowi"><span>資料來源</span><b>IKEA Family 購買紀錄</b></div>
+   </div>
+   ${it.ok?'':'<div class="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>床框不在回購範圍，但仍可以預約維修或捐贈給在地社福單位。</span></div>'}
+   <div class="btns">
+    <button class="btn" id="go" ${S.photo?'':'disabled'}>開始估價</button>
+    <button class="btn sec" id="demo">${S.photo?'換成示範照片':'沒有照片？使用示範照片'}</button>
+   </div>
+  </div>
+ </div>`;
+ document.getElementById('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{S.photo=r.result;pdp();bind()};r.readAsDataURL(f)};
+ document.getElementById('demo').onclick=()=>{S.photo=demoPhoto();pdp();bind()};
+ document.getElementById('go').onclick=()=>{if(S.photo)go('scan')};
+}
+
+function scan(){const it=S.item;
+ const L=['辨識品項：'+it.name+' '+it.type,'比對購買紀錄：'+ym(it.bought)+'購入','檢查表面刮痕與褪色','檢查結構與零件'];
+ v.innerHTML=`${stepper(0)}<div style="max-width:640px"><h1>正在判斷家具狀況</h1><p class="sub">大約需要幾秒鐘。</p>
+  <div class="progress"><span id="bar"></span></div>
+  <ul class="checks">${L.map(l=>`<li><span>${l}</span><em></em></li>`).join('')}</ul></div>`;
+ const lis=[...v.querySelectorAll('.checks li')],bar=document.getElementById('bar');
+ S.grade=aiGrade(it);
+ const fin=()=>{if(S.step!=='scan')return;try{go('result')}catch(err){v.insertAdjacentHTML('beforeend','<p class="plabel">'+err.message+'</p>')}};
+ v.insertAdjacentHTML('beforeend','<div class="btns" style="max-width:640px;margin-top:24px"><button class="btn sec" id="skip">查看估價結果</button></div>');
+ document.getElementById('skip').onclick=fin;
+ lis.forEach((li,k)=>setTimeout(()=>{if(S.step!=='scan')return;li.classList.add('ok');li.querySelector('em').textContent='完成';bar.style.width=((k+1)/lis.length*100)+'%'},(k+1)*500));
+ setTimeout(fin,lis.length*500+400);
+}
+
+function result(){const it=S.item,g=grade(),e=est();
+ v.innerHTML=`${stepper(0)}
+ <div class="pdp">
+  <div class="img" style="aspect-ratio:4/3">${S.photo?`<img src="${S.photo}" alt="" style="width:100%;height:100%;object-fit:contain">`:''}</div>
+  <div class="panel">
+   <div><span class="plabel">${it.name} ${it.type}</span><h1 style="margin:4px 0 0">家具狀況：${g.l}</h1><div class="pdesc">${g.d}</div></div>
+   <div><div class="plabel">${it.ok?'回購估價':'參考價值'}</div>
+    <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap">${P(e.low,'l')}<span style="font-size:28px;font-weight:900">–</span>${P(e.high,'l')}</div>
+    ${it.ok?`<div style="margin-top:8px;font-size:13px"><b>IKEA Family 會員選購物金：</b>${P(e.voucher)}</div>`:''}</div>
+   <div><div style="font-weight:700;margin-bottom:4px">狀況會影響多少價錢？</div><div class="plabel" style="margin-bottom:10px">狀況每差一級，估價約差 NT$ ${money(r10(it.price*.1*it.demand))}。系統判斷不準的話，可以直接點選更改。</div>
+    <div class="gr">${GRADES.map(x=>{const q=est(it,x);return `<button data-g="${x.k}" aria-pressed="${x.k===S.grade}"><span><b>${x.l}</b>${x.k===aiGrade(it)?' <span class="tag">系統判斷</span>':''}<span class="odesc" style="display:block;margin-top:2px">${x.d}</span></span><span class="oright num">NT$ ${money(q.low)}–${money(q.high)}</span></button>`}).join('')}</div></div>
+   <div class="rows">
+    <div class="rowi"><span>購買價格</span><b class="num">NT$ ${money(it.price)}</b></div>
+    <div class="rowi"><span>狀況係數</span><b class="num">${Math.round(g.c*100)}%</b></div>
+    <div class="rowi"><span>二手需求度</span><b class="num">x ${it.demand.toFixed(2)}</b></div>
+    ${it.ok?`<div class="rowi"><span>購物金加碼</span><b class="num">+15%</b></div>`:''}
+   </div>
+   <div class="plabel">最終金額以門市複驗為準。</div>
+   <div class="btns"><button class="btn" data-go="route">選擇處理方式</button><button class="btn link" data-go="pdp">重新拍照</button></div>
+  </div>
+ </div>`;
+ v.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{S.grade=b.dataset.g;S.route=null;result();bind()});
+}
+
+function routes(){const it=S.item,g=S.grade,e=est();return[
+ {k:'buyback',t:'賣回 IKEA，拿現金或購物金',d:'門市複驗後入帳。可以領現金，選購物金再多 15%。',r:it.ok?'<span class="plabel" style="display:block">最高</span>'+P(e.voucher):'',rec:it.ok&&g!=='used',off:!it.ok,w:'想最快處理完、金額確定的人',m:'門市複驗通過當天入帳',why:'狀況還不錯，直接賣回的金額最確定，也最快入帳。'},
+ {k:'consign',t:'寄售到 As-Is 循環區',d:'門市整理後上架，售出後依成交價分潤給你。',r:it.ok?'售出後分潤':'',rec:it.ok&&g==='used',off:!it.ok,w:'不急著拿到錢、願意等家具售出的人',m:'售出後入帳，時間不固定',why:'有明顯使用痕跡時，直接回購的金額較低，可以改用寄售，售出後依成交價分潤。'},
+ {k:'repair',t:'預約零件更換或維修',d:'零件免費提供，修好繼續用。',r:'依項目報價',rec:false,off:false,w:'家具還想繼續用，只是缺零件或鬆動的人',m:'沒有回饋，家具修好後留在你家'},
+ {k:'donate',t:'捐贈給台中在地社福單位',d:'門市確認可用後轉贈，你可獲得循環點數。',r:'200 點',rec:!it.ok,off:false,w:'不在意回饋金、想把家具送給需要的家庭的人',m:'轉贈完成後點數入帳',why:'這個品項不在回購範圍，捐贈可以讓它繼續被使用，你也能拿到循環點數。'}]}
+function opt(o,sel){return `<button class="opt" role="radio" data-k="${o.k}" aria-checked="${sel===o.k}" aria-disabled="${!!o.off}">
+  <span class="radio"></span><span><span class="otitle">${o.t}${o.rec?'<span class="tag">推薦</span>':''}${o.off?'<span class="tag no">此品項不適用</span>':''}</span><span class="odesc" style="display:block">${o.d}</span>${o.w?`<span class="ofit"><b>適合：</b>${o.w}</span>`:''}${o.m?`<span class="ofit"><b>${o.ml||'回饋時間'}：</b>${o.m}</span>`:''}</span>
+  <span class="oright">${o.r||''}</span></button>`}
+
+function route(){const rs=routes();if(!S.route){const r=rs.find(x=>x.rec&&!x.off);S.route=r?r.k:null}
+ v.innerHTML=`${stepper(1)}<div style="max-width:720px">
+  <h1>你想怎麼處理這件家具？</h1><p class="sub">四種方式都能讓家具繼續被使用，不會進焚化爐。</p>
+  ${(()=>{const r=rs.find(x=>x.rec&&!x.off);return r?`<div class="info" style="margin-bottom:16px"><span><b style="color:var(--ink)">不知道怎麼選？</b>依這件家具的狀況，建議選「${r.t}」：${r.why}</span></div>`:''})()}
+  <div class="opts" role="radiogroup">${rs.map(o=>opt(o,S.route)).join('')}</div>
+  ${S.route==='buyback'?(()=>{const e=est();return `<div style="margin-top:20px"><div style="font-weight:700;margin-bottom:10px">回收金要怎麼領？</div><div class="seg"><button data-pay="voucher" aria-pressed="${S.pay==='voucher'}">購物金 NT$ ${money(e.voucher)}（多 15%）</button><button data-pay="cash" aria-pressed="${S.pay==='cash'}">現金 NT$ ${money(e.low)}–${money(e.high)}</button></div></div>`})():''}
+  <div class="btns" style="margin-top:24px"><button class="btn" id="n" ${S.route?'':'disabled'}>繼續</button><button class="btn link" data-go="result">回到估價結果</button></div></div>`;
+ v.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(b.getAttribute('aria-disabled')==='true')return;S.route=b.dataset.k;route();bind()});
+ v.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{S.pay=b.dataset.pay;route();bind()});
+ document.getElementById('n').onclick=()=>S.route&&go('slot');
+}
+
+const SLOTS=[
+ {k:'backhaul',t:'配送車回程順路收件',d:'11/26（四）14:00–17:00，當天有新品配送車經過西屯區。',r:'免費',rec:true,when:'11/26（四）14:00–17:00'},
+ {k:'store',t:'自行送到 IKEA 台中店',d:'營業時間內送到循環服務區，當場複驗入帳。',r:'免費',rec:false,when:'預約保留 7 天，營業時間內送達'},
+ {k:'pickup',t:'專車到府收件',d:'可指定日期與時段，費用可從購物金扣除。',r:'NT$ 590',rec:false,when:'11/24（二）10:00–12:00（可更改）'}];
+function slot(){if(!S.slot)S.slot='backhaul';
+ v.innerHTML=`${stepper(2)}<div style="max-width:720px">
+  <h1>家具要怎麼送到 IKEA？</h1><p class="sub">家具不用拆，保持組裝好的狀態就可以。</p>
+  <div class="opts" role="radiogroup">${SLOTS.map(o=>opt(o,S.slot)).join('')}</div>
+  <div class="btns" style="margin-top:24px"><button class="btn" data-go="done">確認預約</button><button class="btn link" data-go="route">回到處理方式</button></div></div>`;
+ v.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{S.slot=b.dataset.k;slot();bind()});
+}
+
+function done(){const it=S.item,e=est(),r=routes().find(x=>x.k===S.route),sl=SLOTS.find(x=>x.k===S.slot);
+ const code='SL'+String(Math.abs([...it.id+S.grade+S.route].reduce((a,c)=>a*31+c.charCodeAt(0),7))%900000+100000);
+ const amt={buyback:S.pay==='cash'?'現金 NT$ '+money(e.low)+'–'+money(e.high):'NT$ '+money(e.voucher)+' 購物金',consign:'售出後分潤',repair:'依維修項目報價',donate:'循環點數 200 點'}[S.route];
+ const lastT={buyback:'複驗通過當天入帳，簡訊通知',consign:'售出後入帳，上架進度可在會員帳戶查看',repair:'完成時間依維修項目另行通知',donate:'轉贈完成後點數入帳'}[S.route];
+ const last={buyback:S.pay==='cash'?'現金匯入你指定的帳戶':'購物金存入會員帳戶',consign:'整理後上架 As-Is 區',repair:'維修完成後送回',donate:'轉贈社福單位，點數入帳'}[S.route];
+ v.innerHTML=`<div style="max-width:720px">
+  <div class="conf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m7 12 3.5 3.5L17 9"/></svg><h1 style="margin:0">預約完成</h1></div>
+  <p class="sub">確認信已寄到你的會員信箱。${S.slot==='store'?'到門市時出示預約編號即可。':'收件前一天會傳簡訊提醒，當天收件人員抵達前 30 分鐘會先來電。'}</p>
+  <div class="plabel">預約編號</div><div class="code num" style="margin-bottom:20px">${code}</div>
+  <div class="rows" style="margin-bottom:32px">
+   <div class="rowi"><span>家具</span><b>${it.name} ${it.type}</b></div>
+   <div class="rowi"><span>狀況</span><b>${grade().l}</b></div>
+   <div class="rowi"><span>處理方式</span><b>${r.t}</b></div>
+   <div class="rowi"><span>收件</span><b>${sl.t}</b></div>
+   <div class="rowi"><span>${S.slot==='store'?'送達期限':'預計收件時間'}</span><b>${sl.when}</b></div>
+   <div class="rowi"><span>預估回饋</span><b>${amt}</b></div>
+  </div>
+  <h2>接下來</h2>
+  <ol class="next" style="margin-bottom:32px"><li class="d"><span>完成線上估價與預約<br><span class="plabel">今天</span></span></li><li><span>${S.slot==='store'?'送到台中店循環服務區':'收件人員抵達，確認家具'}<br><span class="plabel">${sl.when}</span></span></li><li><span>門市複驗，確認最終金額<br><span class="plabel">${S.slot==='store'?'送達後當場複驗，約 6 分鐘':'家具送達門市後 1 個工作天內'}</span></span></li><li><span>${last}<br><span class="plabel">${lastT}</span></span></li></ol>
+  <h2>這件家具的第二段生活</h2>
+  <div class="impact" style="margin-bottom:8px"><div><b class="num">${it.weight?it.weight+' kg':'1 件'}</b><span>${it.weight?'避免進入焚化的家具重量（官網包裝毛重）':'避免進入焚化的家具'}</span></div><div><b class="num">+${Math.max(3,Math.round(10-age(it.bought)))} 年</b><span>預估延長使用年限</span></div></div>
+  <div class="plabel" style="margin-bottom:24px">以上為示範數值。</div>
+  <div class="btns"><button class="btn sec" data-go="list">回到我的家具</button></div></div>`;
+}
+const QUEUE=[
+ {it:'billy',who:'陳小姐',g:'good',slot:'配送車回程收件（西屯區）'},
+ {it:'micke',who:'林先生',g:'new',slot:'自行送到門市'},
+ {it:'poang',who:'張同學',g:'used',slot:'配送車回程收件（北屯區）'},
+ {it:'brimnes',who:'黃小姐',g:'good',slot:'專車到府收件'}];
+function staff(){
+ if(S.staffSel!=null) return staffDetail();
+ v.innerHTML=`${crumbs([['顧客端','list'],['門市端複驗']])}
+ <h1>今日待複驗．台中店</h1>
+ <p class="sub">顧客線上估價時，品名、購入時間與原價已經從購買紀錄帶入，店員只需要確認家具狀況。</p>
+ <div class="tiles"><div><b class="num">${QUEUE.length}</b><span>待複驗件數</span></div><div><b class="num">12</b><span>今日已完成</span></div><div><b class="num">6 分鐘</b><span>平均複驗時間</span></div></div>
+ <div class="queue">${QUEUE.map((q,i)=>{const it=ITEMS.find(x=>x.id===q.it),g=GRADES.find(x=>x.k===q.g);return `
+  <button class="qrow" data-q="${i}"><div class="img">${ICON[it.icon]}</div>
+   <span><span class="pname">${it.name} ${it.type}</span><br><span class="pdesc">${q.who}．${q.slot}</span><br><span class="ok-tag">✓ 已比對購買紀錄：${ym(it.bought)}購入，NT$ ${money(it.price)}</span></span>
+   <span style="text-align:right"><span class="plabel">系統判斷</span><br><b>${g.l}</b></span></button>`}).join('')}</div>
+ <p class="plabel" style="margin-top:16px">畫面數字為示範資料。</p>`;
+ v.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{S.ck=[];S.staffSel=+b.dataset.q;S.staffGrade=QUEUE[S.staffSel].g;S.staffDone=null;staff();bind()});
+}
+function staffDetail(){
+ const q=QUEUE[S.staffSel],it=ITEMS.find(x=>x.id===q.it),sys=GRADES.find(x=>x.k===q.g),g=GRADES.find(x=>x.k===S.staffGrade);
+ const e=est(it,g);
+ v.innerHTML=`${crumbs([['門市端複驗','staffq'],[it.name]])}
+ <div class="pdp">
+  <div class="img" style="aspect-ratio:4/3">${ICON[it.icon]}</div>
+  <div class="panel">
+   <div><span class="plabel">${q.who}．${q.slot}</span><h1 style="margin:4px 0 0">${it.name} ${it.type}</h1><div class="pdesc">${it.spec}</div></div>
+   <div class="rows"><div class="rowi"><span>購入時間（購買紀錄）</span><b>${ym(it.bought)}</b></div><div class="rowi"><span>原價（購買紀錄）</span><b class="num">NT$ ${money(it.price)}</b></div><div class="rowi"><span>系統判斷</span><b>${sys.l}</b></div></div>
+   <div><div style="font-weight:700;margin-bottom:10px">現場檢查</div>
+    <div class="checklist">${['外觀刮痕與褪色和照片相符','結構穩固、沒有搖晃','零件齊全，門片與抽屜正常','已清潔，可直接上架'].map((t,i)=>`<label><input type="checkbox" id="ck${i}" ${(S.ck||[])[i]?'checked':''}> ${t}</label>`).join('')}</div></div>
+   <div><div style="font-weight:700;margin-bottom:10px">確認狀況</div>
+    <div class="seg">${GRADES.map(x=>`<button data-sg="${x.k}" aria-pressed="${x.k===S.staffGrade}">${x.l}</button>`).join('')}</div></div>
+   <div><div class="plabel">確認後存入顧客會員帳戶（含 Family 加碼 15%）</div>${P(e.voucher,'l')}</div>
+   ${S.staffDone?`<div class="toast">已存入 ${q.who} 的會員帳戶 NT$ ${money(e.voucher)}，並加入 As-Is 區上架清單。</div>`:''}
+   <div class="btns"><button class="btn" id="confirm">確認並入帳</button><button class="btn link" data-go="staffq">回到待複驗清單</button></div>
+  </div></div>`;
+ v.querySelectorAll('[data-sg]').forEach(b=>b.onclick=()=>{S.staffGrade=b.dataset.sg;S.staffDone=null;staffDetail();bind()});
+ document.getElementById('confirm').onclick=()=>{S.ck=[0,1,2,3].map(i=>document.getElementById('ck'+i).checked);S.staffDone=true;staffDetail();bind()};
+}
+render();
+</script>
+
+</body>
+</html>
